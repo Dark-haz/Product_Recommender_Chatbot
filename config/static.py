@@ -1,3 +1,6 @@
-DATABASE_URL = "postgresql://postgres:KfNkamc7uqlIdH5rsxz8@database-1.czykooyqkq7y.us-east-1.rds.amazonaws.com:5432/postgres"
+import os
 
-VECTOR_DIMENSION = 256
+DATABASE_URL =  os.getenv('DATABASE_URL')
+
+
+VECTOR_DIMENSION = 768

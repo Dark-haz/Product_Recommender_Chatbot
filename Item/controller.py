@@ -1,3 +1,4 @@
+import re
 from bs4 import BeautifulSoup
 from flask import request, jsonify
 import json
@@ -7,6 +8,7 @@ import xml.etree.ElementTree as ET
 import xmltodict
 import json
 from Item.input_schema import validate_user_input_data
+
 
 def execution():
     # Middleware for validation
@@ -28,13 +30,17 @@ def execution():
 
     product_selection_prompt = recommend_product_prompt(structured_user_query, similar_items)
     result = invoke_bedrock_claude(product_selection_prompt, 1000)
+    result = re.sub(r"```xml\n?|```", "", result).strip()
+
+    with open("output.txt", "w", encoding="utf-8") as f:
+        f.write(result)
 
     try:
         soup = BeautifulSoup(result, "xml")
         root = ET.fromstring(str(soup))
     except: 
         print("result :" + result)
-        return jsonify(result), 404 
+        return jsonify(result), 200 
 
     data_dict = xmltodict.parse(str(soup))
 

@@ -1,6 +1,13 @@
+import os
 import boto3
 import json
+
+from sklearn.decomposition import PCA
 from config.static import *
+from google import genai
+
+import google.generativeai as genai2
+
 # USER SIDE
 
 # > step 1 : Claude user input processing 
@@ -46,20 +53,13 @@ def process_user_input_prompt(user_input, metadata):
 
 def invoke_bedrock_claude(prompt, max_tokens): 
     try: 
-        bedrock = boto3.client(service_name="bedrock-runtime", region_name='us-east-1') 
-        body = json.dumps({ 
-            "max_tokens": max_tokens,   
-            "messages": [{"role": "user", "content": prompt}], 
-            "anthropic_version": "bedrock-2023-05-31" 
-        }) 
- 
-        response = bedrock.invoke_model(body=body, modelId="anthropic.claude-3-5-sonnet-20240620-v1:0") 
-        response_body = json.loads(response.get("body").read()) 
-        response = response_body.get("content") 
-        response_dict = response[0]
-
-        model_text_output = response_dict['text'] 
-        return model_text_output 
+        api_key = os.environ["GOOGLE_API_KEY"]
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash", contents=prompt
+        )
+        print(response.text)
+        return response.text
     except Exception as e: 
         print(f"Error communicating with Claude: {e}") 
         raise e
@@ -67,36 +67,18 @@ def invoke_bedrock_claude(prompt, max_tokens):
 # > step 2 : TITAN embedd user input 
 
 def invoke_bedrock_titan(prompt_data):
-    modelId = "amazon.titan-embed-text-v2:0"
-    accept = "application/json"
-    contentType = "application/json"
+    genai2.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
-    
-    sample_model_input = {
-        "inputText": prompt_data,
-        "dimensions": VECTOR_DIMENSION,
-        "normalize": True
-    }
-
-    
-    body = json.dumps(sample_model_input)
-
-    
-    bedrock_client = boto3.client(service_name="bedrock-runtime", region_name='us-east-1')
-
-    
-    response = bedrock_client.invoke_model(
-        body=body,
-        modelId=modelId,
-        accept=accept,
-        contentType=contentType
+    # Use the latest embedding model
+    response = genai2.embed_content(
+        model="models/text-embedding-004",
+        content=prompt_data,
+        task_type="retrieval_document"  # Choose "retrieval_query" for search queries
     )
 
-   
-    response_body = json.loads(response.get('body').read())
-    embedding = response_body.get("embedding")
-    return embedding
-    
+    embedding = response["embedding"]
+
+    return embedding    
 
 # > step 2 : find by KNN using processed user input vector (inside controller)
 

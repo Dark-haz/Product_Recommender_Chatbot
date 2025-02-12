@@ -1,12 +1,13 @@
 import pandas as pd
 import json
-from services import invoke_bedrock_titan
+from Item.services import invoke_bedrock_titan
 
 import pandas as pd
 import json
-from services import invoke_bedrock_titan
+from Item.services import invoke_bedrock_titan
 
 def embed_amazon_data(start_row, num_rows):
+    print("started embedding process")
     csv_file_path = 'cleaned_filtered_dataset.csv'
     df = pd.read_csv(csv_file_path)
 
@@ -34,8 +35,8 @@ def embed_amazon_data(start_row, num_rows):
 
 def main():
     # Set start_row and num_rows for the second 100 rows
-    start_row = 100
-    num_rows = 100
+    start_row = 1
+    num_rows = 50
     rr = embed_amazon_data(start_row, num_rows)
     print(rr)
 
